@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Order {{token}}</title><link rel="stylesheet" href="/static/style.css"></head><body><div class="wrap center"><h1>Order {{token}}</h1><div id="status" class="card">Loading…</div></div>
+<script>
+async function refresh(){let r=await fetch('/api/order/{{token}}');let d=await r.json();if(d.error){status.innerHTML='<h2>Token not found</h2>';return}
+status.innerHTML=`<div class="token">${d.token}</div><h2>${d.status}</h2><p>Approx. waiting time: <b>${d.eta} minutes</b></p><p>Payment: <b>${d.payment}</b></p><hr>${d.items.map(x=>`<div class="row">${x.name} × ${x.qty}<span>₹${(x.price*x.qty).toFixed(2)}</span></div>`).join('')}<div class="row total"><b>Total</b><b>₹${d.total.toFixed(2)}</b></div>${d.status==='Ready'?'<div class="ready">🎉 TOKEN READY — PLEASE COLLECT</div>':''}`};refresh();setInterval(refresh,2000)
+</script></body></html>

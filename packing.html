@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Packing - {{stall}}</title><link rel="stylesheet" href="/static/style.css"></head><body><div class="wrap"><h1>📦 Packing Station</h1><p><a href="/admin">Admin</a> · <a href="/display">Customer Display</a></p><div id="orders" class="grid"></div></div>
+<script>
+async function load(){let d=await(await fetch('/api/orders')).json();let os=d.orders.filter(o=>['Received','Packing','Ready'].includes(o.status));
+orders.innerHTML=os.map(o=>`<div class="card order ${o.status}"><div class="row"><span class="token">${o.token}</span><b>${o.status}</b></div>${o.items.map(x=>`<div>${x.name} × ${x.qty}</div>`).join('')}<p>Total: ₹${o.total.toFixed(2)} · Payment: ${o.payment}</p>
+<div><button onclick="st('${o.token}','Packing')">START PACKING</button> <button onclick="st('${o.token}','Ready')">MARK READY</button>
+<select onchange="pay('${o.token}',this.value)"><option ${o.payment==='Pending'?'selected':''}>Pending</option><option ${o.payment==='Cash'?'selected':''}>Cash</option><option ${o.payment==='UPI'?'selected':''}>UPI</option></select></div></div>`).join('')}
+async function st(t,s){await fetch('/api/order/'+t+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:s})});load()}
+async function pay(t,p){await fetch('/api/order/'+t+'/payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payment:p})});load()}
+load();setInterval(load,2000)
+</script></body></html>

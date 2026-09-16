@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{stall}} - Order</title><link rel="stylesheet" href="/static/style.css"></head>
+<body><div class="wrap"><h1>🍴 {{stall}}</h1><p class="muted">Scan → Order → Get Token → Pay → Collect when Ready</p>
+<div id="menu"></div><div class="cart card"><h2>Your Order</h2><div id="cart"></div><div class="row"><b>Subtotal</b><span id="sub">₹0</span></div><div class="row"><b>Discount</b><span id="disc">₹0</span></div><div class="row total"><b>Total</b><span id="total">₹0</span></div>
+<input id="customer" placeholder="Name (optional)"><input id="phone" placeholder="Phone (optional)">
+<button onclick="placeOrder()">PLACE ORDER</button><div id="msg"></div></div></div>
+<script>
+let items=[],cart={}; let discount=0;
+const money=x=>"₹"+Number(x).toFixed(2);
+async function load(){let d=await (await fetch('/api/items')).json();items=d.items;discount=d.discount;
+document.getElementById('menu').innerHTML=items.map(i=>`<div class="card item"><div><b>${i.name}</b><br>${money(i.price)} · <span>${i.stock>0?i.stock+' left':'SOLD OUT'}</span></div><button ${i.stock<1?'disabled':''} onclick="add(${i.id})">+</button></div>`).join('');render()}
+function add(id){let i=items.find(x=>x.id==id);cart[id]=(cart[id]||0)+1;if(cart[id]>i.stock)cart[id]=i.stock;render()}
+function render(){let arr=Object.entries(cart).filter(([id,q])=>q>0);let sub=0;
+document.getElementById('cart').innerHTML=arr.length?arr.map(([id,q])=>{let i=items.find(x=>x.id==id);sub+=i.price*q;return `<div class="row">${i.name} × ${q}<span>${money(i.price*q)} <button onclick="cart[${id}]--;render()">−</button></span></div>`}).join(''):'<p class="muted">Nothing selected.</p>';
+let d=sub*discount/100;document.getElementById('sub').textContent=money(sub);document.getElementById('disc').textContent=money(d);document.getElementById('total').textContent=money(sub-d)}
+async function placeOrder(){let arr=Object.entries(cart).filter(([id,q])=>q>0).map(([id,q])=>({id:Number(id),qty:q}));
+if(!arr.length)return alert('Select food first.');
+let r=await fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:arr,customer:customer.value,phone:phone.value})});let d=await r.json();
+if(!r.ok)return alert(d.error);document.querySelector('.cart').innerHTML=`<div class="success"><h2>Order Received ✅</h2><div class="token">${d.token}</div><h3>Approx. time: ${d.eta} minutes</h3><p>Please remember your token. Pay by Cash/UPI as instructed at the counter.</p><a class="button" href="/order/${d.token}">TRACK ORDER</a></div>`}
+load();
+</script></body></html>

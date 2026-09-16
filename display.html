@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Token Display - {{stall}}</title><link rel="stylesheet" href="/static/style.css"></head><body class="display"><h1>🔔 TOKENS READY</h1><div id="ready"></div><h2>Recently received</h2><div id="received"></div>
+<script>
+let last='';
+async function load(){let d=await(await fetch('/api/orders')).json();let r=d.orders.filter(o=>o.status==='Ready').slice(0,8);ready.innerHTML=r.map(o=>`<div class="big">${o.token}</div>`).join('')||'<div class="big muted">Waiting…</div>';
+received.innerHTML=d.orders.filter(o=>['Received','Packing'].includes(o.status)).slice(0,6).map(o=>`<span class="pill">${o.token} · ${o.status}</span>`).join('')}
+load();setInterval(load,1500)
+</script></body></html>
