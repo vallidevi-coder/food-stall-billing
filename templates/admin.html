@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin - {{stall}}</title><link rel="stylesheet" href="/static/style.css"></head><body><div class="wrap"><h1>⚙️ {{stall}} — Admin</h1>
+<div class="grid"><div class="card"><h2>Live Summary</h2><div id="summary"></div></div><div class="card"><h2>Event Controls</h2>
+<label>Discount %</label><input id="discount" type="number" step="0.5"><label>Minutes per order</label><input id="mins" type="number"><label>UPI ID</label><input id="upi"><button onclick="saveSettings()">SAVE SETTINGS</button></div></div>
+<div class="card"><h2>Stock & Price — change during event</h2><div id="items"></div></div>
+<p><a class="button" href="/packing">Packing Screen</a> <a class="button" href="/display">Token Display</a> <a class="button" href="/">Customer Order Page</a></p></div>
+<script>
+const money=x=>'₹'+Number(x).toFixed(2);
+async function load(){let d=await(await fetch('/api/summary')).json();let s=d.summary;
+summary.innerHTML=`Orders: <b>${s.orders}</b> &nbsp; Sales: <b>${money(s.sales)}</b> &nbsp; Ready: <b>${s.ready}</b><br>${Object.entries(d.counts).map(x=>x[0]+': '+x[1]).join(' · ')}`;
+items.innerHTML=d.items.map(i=>`<div class="row item"><span><b>${i.name}</b><br><small>Price ₹${i.price} · ${i.active?'Active':'Hidden'}</small></span>
+<span><input class="small" id="st${i.id}" type="number" value="${i.stock}"><input class="small" id="pr${i.id}" type="number" value="${i.price}"><button onclick="upd(${i.id})">UPDATE</button></span></div>`).join('')}
+async function init(){let d=await(await fetch('/api/items')).json();discount.value=d.discount;let set=await(await fetch('/api/summary')).json();mins.value=await getSetting('minutes_per_order');upi.value=d.upi_id}
+async function getSetting(k){let r=await fetch('/api/summary'); /* settings are saved through visible fields; default shown below */ return 4}
+async function upd(id){await fetch('/api/item/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stock:Number(document.getElementById('st'+id).value),price:Number(document.getElementById('pr'+id).value)})});load()}
+async function saveSettings(){await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({discount_percent:discount.value,minutes_per_order:mins.value,upi_id:upi.value})});alert('Settings updated.');load()}
+load();setInterval(load,3000);init()
+</script></body></html>
